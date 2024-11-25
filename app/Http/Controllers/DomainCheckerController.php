@@ -14,32 +14,26 @@ class DomainCheckerController extends Controller
         $apiUrl = "https://www.whoisxmlapi.com/whoisserver/WhoisService";
         $apiKey = env('WHOIS_API_KEY');
 
-        // Call the Whois API
         $response = Http::get($apiUrl, [
             'apiKey' => $apiKey,
             'domainName' => $domain,
             'outputFormat' => 'JSON',
         ]);
 
-        // Return an error response if the API call fails
         if (!$response->successful()) {
             return $this->errorResponse('Error fetching data');
         }
 
-        // Decode the API response
         $data = $response->json();
 
-        // Check if Whois data exists
         if (!isset($data['WhoisRecord'])) {
             return $this->domainUnavailableResponse($domain);
         }
 
-        // Extract relevant Whois information
         $whois = $data['WhoisRecord'];
         $status = $this->extractStatus($whois);
         $expiryDate = $this->extractExpiryDate($whois);
 
-        // Return the domain information in the response
         return response()->json([
             'domain' => $domain,
             'status' => $status,
@@ -47,7 +41,6 @@ class DomainCheckerController extends Controller
         ]);
     }
 
-    // Helper method to extract status from Whois data
     private function extractStatus(array $whois): ?string
     {
         if (isset($whois['registryData']['header'])) {
@@ -59,13 +52,11 @@ class DomainCheckerController extends Controller
         return $whois['status'] ?? null;
     }
 
-    // Helper method to extract expiry date from Whois data
     private function extractExpiryDate(array $whois): ?string
     {
         return $whois['expiresDate'] ?? $whois['registryData']['expiresDate'] ?? null;
     }
 
-    // Helper method to return the error response
     private function errorResponse(string $message): JsonResponse
     {
         return response()->json([
@@ -74,7 +65,6 @@ class DomainCheckerController extends Controller
         ], 500);
     }
 
-    // Helper method to return domain unavailable response
     private function domainUnavailableResponse(string $domain): JsonResponse
     {
         return response()->json([
